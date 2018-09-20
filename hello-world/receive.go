@@ -39,15 +39,7 @@ func declareQueue(ch *amqp.Channel) amqp.Queue {
 	return q
 }
 
-func main() {
-	conn := connectToServer()
-	defer conn.Close()
-
-	ch := openChannel(conn)
-	defer ch.Close()
-
-	q := declareQueue(ch)
-
+func registerConsumer(ch *amqp.Channel, q amqp.Queue) (msgs <-chan amqp.Delivery) {
 	msgs, err := ch.Consume(
 		q.Name, // queue
 		"",     // consumer
@@ -58,6 +50,19 @@ func main() {
 		nil,    // args
 	)
 	failOnError(err, "Failed to register a consumer")
+	return
+}
+
+func main() {
+	conn := connectToServer()
+	defer conn.Close()
+
+	ch := openChannel(conn)
+	defer ch.Close()
+
+	q := declareQueue(ch)
+
+	msgs := registerConsumer(ch, q)
 
 	forever := make(chan bool)
 
